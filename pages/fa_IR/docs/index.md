@@ -3,9 +3,9 @@ title: GORM Guides
 layout: page
 ---
 
-The fantastic ORM library for Golang aims to be developer friendly.
+هدف کتابخانه ORM فوق‌العاده برای Golang این است که برای توسعه‌دهندگان مناسب باشد.
 
-## Overview
+## بررسی اجمالی
 
 * Full-Featured ORM
 * Associations (Has One, Has Many, Belongs To, Many To Many, Polymorphism, Single-table inheritance)
@@ -22,14 +22,14 @@ The fantastic ORM library for Golang aims to be developer friendly.
 * Every feature comes with tests
 * Developer Friendly
 
-## Install
+## نصب
 
 ```sh
 go get -u gorm.io/gorm
 go get -u gorm.io/driver/sqlite
 ```
 
-## Quick Start
+## شروع سریع
 
 ```go
 package main
