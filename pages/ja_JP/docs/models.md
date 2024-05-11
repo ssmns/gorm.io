@@ -3,35 +3,52 @@ title: モデルを宣言する
 layout: page
 ---
 
+GORMは、Goの構造体をデータベーステーブルにマッピングすることで、データベースの相互作用を簡素化します。 GORMでモデルを宣言する方法を理解することは、その機能をフルに活用するための基本です。
+
 ## モデルを宣言する
 
-モデルは Goの基本型、（基本型の）ポインタ/エイリアス、 [Scanner](https://pkg.go.dev/database/sql/?tab=doc#Scanner) および [Valuer](https://pkg.go.dev/database/sql/driver#Valuer) インターフェイスを実装するカスタム型からなる通常の構造体です。
+モデルは通常の構造体を使用して定義されます。 これらの構造体には、`database/sql`パッケージの[Scanner](https://pkg.go.dev/database/sql/?tab=doc#Scanner)インタフェースと[Valuer](https://pkg.go.dev/database/sql/driver#Valuer)インタフェースを実装している限り、基本的なGoの型、それらのポインタまたはエイリアス、あるいはカスタムタイプを含むフィールドを含めることができます。
 
-例：
+`User` モデルの次の例を考えてみましょう。
 
 ```go
 type User struct {
-  ID           uint
-  Name         string
-  Email        *string
-  Age          uint8
-  Birthday     *time.Time
-  MemberNumber sql.NullString
-  ActivatedAt  sql.NullTime
-  CreatedAt    time.Time
-  UpdatedAt    time.Time
+  ID           uint           // 主キーの標準フィールド
+  Name         string         // 通常の文字列フィールド
+  Email        *string        // 文字列へのポインタ、nullを許可
+  Age          uint8          // 符号なし8ビット整数
+  Birthday     *time.Time     // time.Timeへのポインタ。nullを許可
+  MemberNumber sql.NullString // sql.NullStringを使用して、null可能な文字列をハンドリング
+  ActivatedAt  sql.NullTime   // sql.NullTimeを使用したnull可能な時間フィールド
+  CreatedAt    time.Time      // GORMによって自動的に管理される作成時間
+  UpdatedAt    time.Time      // GORMによって自動的に管理される更新時間
 }
 ```
 
-## 規約
+このモデルでは:
 
-GORM prefers convention over configuration. By default, GORM uses `ID` as primary key, pluralizes struct name to `snake_cases` as table name, `snake_case` as column name, and uses `CreatedAt`, `UpdatedAt` to track creating/updating time
+- `uint`, `文字列`, および `uint8` のような基本的なデータ型が直接使用されます。
+- `*string` や `*time.Time` のような型へのポインタは、null可能フィールドを示します。
+- `sql.NullString` と `sql.NullTime` の `database/sql` パッケージは null可能フィールドでより多くの制御が可能です。
+- `Created` と `UpdatedAt` は、レコードが作成または更新されたときにGORMが自動的に現在の時刻を入力する特別なフィールドです。
 
-If you follow the conventions adopted by GORM, you'll need to write very little configuration/code. If convention doesn't match your requirements, [GORM allows you to configure them](conventions.html)
+GORMにおけるモデル宣言の基本的な機能に加えて、シリアライザタグによるシリアライズのサポートに注目することが重要です。 この機能により、特にカスタム・シリアライズ・ロジックを必要とするフィールドについて、データの格納方法とデータベースからの取得方法の柔軟性が高まります。詳細な説明については [シリアライザー](serializer.html) を参照してください。
 
-## gorm.Model
+### 規約
 
-GORMは `gorm.Model` 構造体を定義しています。これには `ID`, `CreatedAt`, `UpdatedAt`, `DeletedAt` のフィールドが含まれます。
+1. **主キー**: GORMは各モデルのデフォルト主キーとして `ID` という名前のフィールドを使用します。
+
+2. **テーブル名**: デフォルトでは、GORMは構造体名を `スネークケース` に変換し、テーブル名を複数形にします。 例えば、 `User` 構造体は、データベースの `users` テーブルになります。
+
+3. **カラム名**: GORMは、データベース内のカラム名を自動的に `スネークケース` に変換します。
+
+4. **タイムスタンプフィールド**: GORMは `Created` および `UpdatedAt` という名前のフィールドを使用して、レコードの作成と更新時間を自動的に追跡します。
+
+Following these conventions can greatly reduce the amount of configuration or code you need to write. However, GORM is also flexible, allowing you to customize these settings if the default conventions don't fit your requirements. You can learn more about customizing these conventions in GORM's documentation on [conventions](conventions.html).
+
+### `gorm.Model`
+
+GORM provides a predefined struct named `gorm.Model`, which includes commonly used fields:
 
 ```go
 // gorm.Modelの定義
@@ -43,7 +60,13 @@ type Model struct {
 }
 ```
 
-この構造体を埋め込むことで、これらのフィールドを自身の構造体に含めることができます。 [Embedded Struct](#embedded_struct) も参照してください。
+- **Embedding in Your Struct**: You can embed `gorm.Model` directly in your structs to include these fields automatically. This is useful for maintaining consistency across different models and leveraging GORM's built-in conventions, refer [Embedded Struct](#embedded_struct)
+
+- **Fields Included**:
+  - `ID`: A unique identifier for each record (primary key).
+  - `CreatedAt`: Automatically set to the current time when a record is created.
+  - `UpdatedAt`: Automatically updated to the current time whenever a record is updated.
+  - `DeletedAt`: Used for soft deletes (marking records as deleted without actually removing them from the database).
 
 ## 高度な機能
 

@@ -3,46 +3,70 @@ title: Declaring Models
 layout: page
 ---
 
+GORM simplifies database interactions by mapping Go structs to database tables. Understanding how to declare models in GORM is fundamental for leveraging its full capabilities.
+
 ## Deklarasi Model
 
-Model adalah struct biasa dengan type basic Go, pointer/aliasnya type custom yang mengimplementasikan interface [Scanner](https://pkg.go.dev/database/sql/?tab=doc#Scanner) dan [Valuer](https://pkg.go.dev/database/sql/driver#Valuer)
+Models are defined using normal structs. These structs can contain fields with basic Go types, pointers or aliases of these types, or even custom types, as long as they implement the [Scanner](https://pkg.go.dev/database/sql/?tab=doc#Scanner) and [Valuer](https://pkg.go.dev/database/sql/driver#Valuer) interfaces from the `database/sql` package
 
-Contoh:
+Pertimbangkan contoh model `User` berikut ini:
 
 ```go
 type User struct {
-  ID           uint
-  Name         string
-  Email        *string
-  Age          uint8
-  Birthday     *time.Time
-  MemberNumber sql.NullString
-  ActivatedAt  sql.NullTime
-  CreatedAt    time.Time
-  UpdatedAt    time.Time
+  ID           uint           // Bidang standar untuk primary key
+  Name         string         // Bidang string biasa
+  Email        *string        // Sebuah pointer string, yang memungkinkan nilai null
+  Age          uint8          // Bilangan bulat positif 8-bit
+  Birthday     *time.Time     // Sebuah pointer time.Time, bisa berupa nilai null
+  MemberNumber sql.NullString // Menggunakan sql.NullString untuk menangani string yang bisa bernilai null
+  ActivatedAt  sql.NullTime   // Menggunakan sql.NullTime untuk bidang waktu yang bisa bernilai null
+  CreatedAt    time.Time      // Dikelola secara otomatis oleh GORM untuk waktu pembuatan
+  UpdatedAt    time.Time      // Dikelola secara otomatis oleh GORM untuk waktu pembaruan
 }
 ```
 
-## Konvensi
+Dalam model ini:
 
-GORM prefers convention over configuration. By default, GORM uses `ID` as primary key, pluralizes struct name to `snake_cases` as table name, `snake_case` as column name, and uses `CreatedAt`, `UpdatedAt` to track creating/updating time
+- Tipe data dasar seperti `uint`, `string`, dan `uint8` digunakan secara langsung.
+- Sebuah pointer ke tipe seperti `*string` dan `*time.Time` mengindikasikan bidang yang dapat bernilai null.
+- `sql.NullString` dan `sql.NullTime` dari package `database/sql` digunakan untuk bidang yang dapat bernilai null dengan kontrol yang lebih luas.
+- `CreatedAt` dan `UpdatedAt` adalah bidang khusus yang secara otomatis diisi oleh GORM dengan waktu saat ini ketika record dibuat atau diperbarui.
 
-If you follow the conventions adopted by GORM, you'll need to write very little configuration/code. If convention doesn't match your requirements, [GORM allows you to configure them](conventions.html)
+Selain fitur dasar deklarasi model di GORM, penting untuk menyoroti dukungan serialisasi melalui tag serializer. Fitur ini meningkatkan fleksibilitas bagaimana data disimpan dan diambil dari database, terutama untuk bidang yang memerlukan logika serialisasi khusus, Lihat [Serializer](serializer.html) untuk penjelasan yang lebih rinci
 
-## gorm.Model
+### Konvensi
 
-GORM mendefinisikan struct `gorm.Model`, yang mencakup *field* `ID`, `CreatedAt`, `UpdatedAt`, ``DeletedAt< /kode></p>
+1. **Primary Key**: GORM menggunakan bidang bernama `ID` sebagai primary key default untuk setiap model.
 
-<pre><code class="go">// definisi gorm.Model
+2. **Table Names**: By default, GORM converts struct names to `snake_case` and pluralizes them for table names. For instance, a `User` struct becomes `users` in the database.
+
+3. **Column Names**: GORM automatically converts struct field names to `snake_case` for column names in the database.
+
+4. **Timestamp Fields**: GORM uses fields named `CreatedAt` and `UpdatedAt` to automatically track the creation and update times of records.
+
+Following these conventions can greatly reduce the amount of configuration or code you need to write. However, GORM is also flexible, allowing you to customize these settings if the default conventions don't fit your requirements. You can learn more about customizing these conventions in GORM's documentation on [conventions](conventions.html).
+
+### `gorm.Model`
+
+GORM provides a predefined struct named `gorm.Model`, which includes commonly used fields:
+
+```go
+// definisi gorm.Model
 type Model struct {
   ID        uint           `gorm:"primaryKey"`
   CreatedAt time.Time
   UpdatedAt time.Time
   DeletedAt gorm.DeletedAt `gorm:"index"`
 }
-``</pre>
+```
 
-Anda dapat menyematkannya ke dalam struct Anda untuk menyertakan *field* tersebut, lihat [Embedded Struct](#embedded_struct)
+- **Embedding in Your Struct**: You can embed `gorm.Model` directly in your structs to include these fields automatically. This is useful for maintaining consistency across different models and leveraging GORM's built-in conventions, refer [Embedded Struct](#embedded_struct)
+
+- **Fields Included**:
+  - `ID`: A unique identifier for each record (primary key).
+  - `CreatedAt`: Automatically set to the current time when a record is created.
+  - `UpdatedAt`: Automatically updated to the current time whenever a record is updated.
+  - `DeletedAt`: Used for soft deletes (marking records as deleted without actually removing them from the database).
 
 ## Advanced
 

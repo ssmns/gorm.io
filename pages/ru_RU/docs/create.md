@@ -18,14 +18,14 @@ result.RowsAffected // возвращает количество вставле�
 Мы также можем создать несколько записей с помощью `Create()`:
 ```go
 users := []*User{
-    User{Name: "Jinzhu", Age: 18, Birthday: time.Now()},
-    User{Name: "Jackson", Age: 19, Birthday: time.Now()},
+    {Name: "Jinzhu", Age: 18, Birthday: time.Now()},
+    {Name: "Jackson", Age: 19, Birthday: time.Now()},
 }
 
-result := db.Create(users) // передайте фрагмент, чтобы вставить несколько строк
+result := db.Create(users) // pass a slice to insert multiple row
 
-result.Error        // возвращает ошибку
-result.RowsAffected // возвращает количество добавленных записей
+result.Error        // returns error
+result.RowsAffected // returns inserted records count
 ```
 
 {% note warn %}
@@ -50,7 +50,7 @@ db.Omit("Name", "Age", "CreatedAt").Create(&user)
 
 ## <span id="batch_insert">Пакетная вставка</span>
 
-To efficiently insert large number of records, pass a slice to the `Create` method. GORM will generate a single SQL statement to insert all the data and backfill primary key values, hook methods will be invoked too. It will begin a **transaction** when records can be splited into multiple batches.
+To efficiently insert large number of records, pass a slice to the `Create` method. GORM will generate a single SQL statement to insert all the data and backfill primary key values, hook methods will be invoked too. It will begin a **transaction** when records can be split into multiple batches.
 
 ```go
 var users = []User{{Name: "jinzhu1"}, {Name: "jinzhu2"}, {Name: "jinzhu3"}}
@@ -256,6 +256,31 @@ type User struct {
   FullName  string `gorm:"->;type:GENERATED ALWAYS AS (concat(firstname,' ',lastname));default:(-);"`
 }
 ```
+
+{% note warn %}
+**NOTE** **SQLite** doesn't support some records are default values when batch insert. See [SQLite Insert stmt](https://www.sqlite.org/lang_insert.html). For example:
+
+```go
+type Pet struct {
+    Name string `gorm:"default:cat"`
+}
+
+// In SQLite, this is not supported, so GORM will build a wrong SQL to raise error:
+// INSERT INTO `pets` (`name`) VALUES ("dog"),(DEFAULT) RETURNING `name`
+db.Create(&[]Pet{{Name: "dog"}, {}})
+```
+A viable alternative is to assign default value to fields in the hook, e.g.
+
+```go
+func (p *Pet) BeforeCreate(tx *gorm.DB) (err error) {
+    if p.Name == "" {
+        p.Name = "cat"
+    }
+}
+```
+
+You can see more info in [issues#6335](https://github.com/go-gorm/gorm/issues/6335)
+{% endnote %}
 
 When using virtual/generated value, you might need to disable its creating/updating permission, check out [Field-Level Permission](models.html#field_permission)
 

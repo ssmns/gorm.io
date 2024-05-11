@@ -3,21 +3,21 @@ title: Conventions
 layout: page
 ---
 
-## `ID` as Primary Key
+## `ID` als Primärschlüssel
 
-GORM uses the field with the name `ID` as the table's primary key by default.
+GORM nutzt das Feld mit dem Namen `ID` als den standardmäßigen Primärschlüssel einer Tabelle.
 
 ```go
 type User struct {
-  ID   string // field named `ID` will be used as a primary field by default
+  ID   string // das Feld `ID` wird standardmäßig als Primärfeld genutzt
   Name string
 }
 ```
 
-You can set other fields as primary key with tag `primaryKey`
+Mit dem Tag `primaryKey` können auch andere Felder als Primärschlüssel genutzt werden
 
 ```go
-// Set field `UUID` as primary field
+// Setze Feld `UUID` als Primärfeld
 type Animal struct {
   ID     int64
   UUID   string `gorm:"primaryKey"`
@@ -26,9 +26,9 @@ type Animal struct {
 }
 ```
 
-Also check out [Composite Primary Key](composite_primary_key.html)
+Siehe auch [Zusammengesetzte Primärschlüssel](composite_primary_key.html)
 
-## Pluralized Table Name
+## Tabellennamen im Plural
 
 GORM pluralizes struct name to `snake_cases` as table name, for struct `User`, its table name is `users` by convention
 
@@ -86,7 +86,7 @@ Check out [From SubQuery](advanced_query.html#from_subquery) for how to use SubQ
 
 ### <span id="naming_strategy">NamingStrategy</span>
 
-GORM allows users change the default naming conventions by overriding the default `NamingStrategy`, which is used to build `TableName`, `ColumnName`, `JoinTableName`, `RelationshipFKName`, `CheckerName`, `IndexName`, Check out [GORM Config](gorm_config.html#naming_strategy) for details
+GORM allows users to change the default naming conventions by overriding the default `NamingStrategy`, which is used to build `TableName`, `ColumnName`, `JoinTableName`, `RelationshipFKName`, `CheckerName`, `IndexName`, Check out [GORM Config](gorm_config.html#naming_strategy) for details
 
 ## Column Name
 
